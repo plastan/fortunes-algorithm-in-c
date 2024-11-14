@@ -4,6 +4,14 @@
 #define SCREEN_HEIGHT 600
 #include "priorityq.c"
 
+
+//TODO :
+  // 1. Make the whole thing memmory safe!!!
+  // 2. Add documentation.
+  // 3. Make raylib visualization.
+
+
+
 Point sites[5] = {
     {100,100},  
     {150,150},  
@@ -27,8 +35,7 @@ int ei=0;
 Arc * BL = NULL;
 
 Point * Edge_intersection(Edge * el, Edge * er){
-  // printf("(%d,%d),(%d,%d)\n",el->start->x,el->start->y,er->start->x,er->start->y);
-  // printf("[%f, %f] \n ",el->m,er->m);
+
   if (el == NULL || er == NULL) return NULL;
   if (el->m == INFINITY) return newPoint(el->startx,getY(el,er->startx));
   else if (er->m == INFINITY) return newPoint(er->startx,getY(er,el->startx));
@@ -51,30 +58,23 @@ return NULL;
   
   
  void AddCircleEvent(Arc * arc, Point * p){
-  // printf("circle Event \n");
+
   if (arc->left != NULL && arc->right !=NULL){
    Point a = *arc -> left -> p;
    Point b = *arc -> p;
    Point c = *arc -> right -> p;
-   // printf("a  : (%d,%d)\n b: (%d,%d)\n c : (%d,%d)\n\n",a.x,a.y,b.x,b.y,c.x,c.y);
+
     //determining weather the point's bisectors intersects
     
     int value  =(b.x-a.x) * (c.y-a.y) - (c.x-a.x) * (b.y-a.y);
-    // printf("%d , %d, %d, %d\n",(b.x-a.x) , (c.y-a.y) , (c.x-a.x), (b.y-a.y)); 
-    
-    // printf("value : %d \n",value);
+
     if(value > 0 ) {
-        // printf("The point is inside the circle\n");
         Point *  edge_intersec = Edge_intersection(arc->le,arc->re);
-      printf("  edge_intersec : %d,%d\n",edge_intersec->x,edge_intersec->y);
         if (edge_intersec != NULL){
-        // printf("edge_intersec is not NULL");
         float circle_radius = sqrt(pow(edge_intersec->x - arc->p->x,2)+ pow(edge_intersec->y - arc->p->y,2));
         float vertex_y_value = circle_radius + edge_intersec->y;
           Point * event_position = newPoint(edge_intersec->x,vertex_y_value);
-          // printf("(%d %d)",event_position->x,event_position->y);
           push(&pq,newEvent(true,event_position,arc,edge_intersec));
-          // printf("pushing event\n");
         }
       } 
      
@@ -95,17 +95,6 @@ void PointEvent(Event * e){
 
       return ;
     }
-
-    //
-    // if (p->x  < head->p -> x){
-    //   Edge * re = newEdge(p,head->p,p->x);
-    //   Arc * n = newArc(p,NULL, head,NULL,re);
-    //   head->left = n;
-    //   head = n;
-    //   head->right->le = re;
-    // BL = head;
-    // }
-
     // finding the arc below the inserting Point
     
     while ( head->right != NULL && parabola_intersection(p->y,*head->p,*head->right->p)<= p->x){
@@ -156,7 +145,6 @@ float  parabola_intersection(int y,Point f1,Point f2) {
   }
 
 void CircleEvent(Event * e){
-  /*printf("CircleEvent\n");  */
 
   Arc * arc = e->caller;
   Point *p = e->p;
@@ -201,13 +189,6 @@ void CircleEvent(Event * e){
 };
 
 
-
-
-
-
-
-
-
 // ________________________________________________________________________________________________________________
 
 void seeBeachLine(Arc * a){
@@ -237,7 +218,6 @@ while(!isEmpty(&pq)){
 
 
     Event * e = top(&pq);
-    // printf("(%d, %d)\t\n",e->p->x,e->p->y);
     pop(&pq);
 
 
@@ -247,19 +227,7 @@ while(!isEmpty(&pq)){
       CircleEvent(e);
     }
 
-   // seeBeachLine(BL);
   }
-
-  // for (int l = 0; l < ei ; l++){
-  //   printf("(%f,%f) -\n ",edges[l].m,edges[l].q);
-  // }
-  // printf("number of vertices calculated : %d",vi);
-  //
-  // for (int j = 0;j < vi; j++){
-  //   printf("[  %d  ,  %d  ]  \n",vertecies[j].x,vertecies[j].y);
-  // }
-  //
-
 
   return 0;
 }
