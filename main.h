@@ -38,6 +38,8 @@ struct Edge{
     float m;
     float q;
     float startx;
+    Point * left_arc_point;
+    Point * right_arc_point;
 };
 
 
@@ -74,6 +76,17 @@ float getY(Edge * e1, float startx){
   return result;
 };
 
+
+float getX(Edge * e, float y){
+  float result ;
+  if (e->m == INFINITY){
+    result = -1;
+  }else{
+    result = (float) (y - e->q)/e->m;
+  }
+  return result;
+}
+
 Event * newEvent(bool type , Point *p , Arc * caller, Point * vertex){
     Event * e = malloc(sizeof(Event));
     e->p = p;
@@ -93,6 +106,8 @@ Edge * newEdge(Point * p1, Point * p2, float startx){
         e->m = (float)-(p1->x - p2->x)/(p1->y - p2->y);
         e->q =(float) (0.5 *(float) (p1->x * p1->x - p2->x * p2->x  + p1->y * p1->y - p2->y * p2->y)) / (p1->y - p2->y);
 
+        e->left_arc_point = p1;
+        e->right_arc_point = p2;
         if (startx != -1 && e->m != INFINITY){
           e->start = newPoint(startx, getY(e,startx) );
         }

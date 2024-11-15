@@ -18,9 +18,11 @@ Node *pq = NULL;
 Point vertecies[100];
 int vi = 0;
 
-Edge edges[100];
+Edge *edges[100];
 int ei = 0;
 
+Edge final_edges[100];
+int final_ei = 0;
 // Beach line
 Arc *BL = NULL;
 
@@ -67,6 +69,14 @@ void AddCircleEvent(Arc *arc, Point *p) {
   }
 }
 
+// poitn outside
+bool Bounday_check(Point *p) {
+  if (p->x < 0 || p->x > SCREEN_WIDTH || p->y < 0 || p->y > SCREEN_HEIGHT) {
+    return true;
+  }
+  return false;
+}
+
 void PointEvent(Event *e) {
   // printf("PointEvent\n");
 
@@ -90,9 +100,9 @@ void PointEvent(Event *e) {
   Edge *el = newEdge(head->p, p, p->x);
   Edge *er = newEdge(p, head->p, p->x);
 
-  edges[ei] = *el;
+  edges[ei] = el;
   ei++;
-  edges[ei] = *el;
+  edges[ei] = er;
   ei++;
 
   Arc *arc_p = newArc(p, head, NULL, el, er);
@@ -144,19 +154,100 @@ void CircleEvent(Event *e) {
   arc->left->right = arc->right;
   arc->right->left = arc->left;
 
-  edges[ei] = *new_edge;
+  edges[ei] = new_edge;
   ei++;
-  vertecies[vi] = *e->vertex;
-  vi++;
 
+  if (!Bounday_check(e->vertex)) {
+    vertecies[vi] = *e->vertex;
+    vi++;
+  }
+
+  // printf("Vertex %d %d\n", e->vertex->x, e->vertex->y);
   arc->le->end = e->vertex;
   arc->re->end = e->vertex;
-
   new_edge->start = e->vertex;
 
   AddCircleEvent(arc->left, p);
   AddCircleEvent(arc->right, p);
 };
+
+Point *edge_end(Edge *e, float y_limit) {
+  float x = fmin(SCREEN_WIDTH, fmax(0, getX(e, y_limit)));
+  float y = getY(e, x);
+  if (y != -1)
+    y = y_limit;
+  Point *p = newPoint(x, y);
+  vertecies[vi] = *p;
+  vi++;
+  return p;
+}
+
+void complete_edges(Point *last) {
+  Arc *head = BL;
+
+  while (head->right != NULL) {
+
+    Edge *e = head->re;
+    float x = parabola_intersection(last->y * 1.1, *e->left_arc_point,
+                                    *e->right_arc_point);
+    float y = getY(e, x);
+    // printf("      : x %d y %d\n", x, y);
+    // printf("start : x %d y %d\n", e->start->x, e->start->y);
+    // printf("end   : x %d y %d\n", e->end ? e->end->x : -1,
+    //        e->end ? e->end->y : -1);
+
+    // finding  end point
+
+    if ((e->start->y < 0 && y < e->start->y) ||
+        (e->start->x > 0 && x < e->start->x) ||
+        (e->start->x > SCREEN_WIDTH && x > e->start->x)) {
+      e->end = e->start;
+    } else {
+      if (e->m == 0) {
+        x = x - e->start->x <= 0 ? 0 : SCREEN_WIDTH;
+        e->end = newPoint(x, e->start->y);
+        vertecies[vi] = *e->end;
+
+        vi++;
+
+      } else {
+
+        if (e->m == INFINITY) {
+
+          y = SCREEN_HEIGHT;
+        } else {
+          y = e->m * (x - e->start->x) <= 0 ? 0 : SCREEN_HEIGHT;
+        }
+        printf("edge_end ( % d)", y);
+        e->end = edge_end(e, y);
+
+        printf("end : x %d y %d\n", e->end->x, e->end->y);
+      }
+    }
+    head = head->right;
+    int option = 0;
+    for (int i = 0; i < ei; i++) {
+      Edge *e = edges[i];
+
+      option = 1 * Bounday_check(e->start) + 2 * Bounday_check(e->end);
+
+      if (option == 3) {
+        // both points are inside the SCREEN
+        edges[ei] = NULL;
+      } else if (option == 2) {
+        // only start point is inside the SCREEN
+        float y = e->end->y <= e->start->y ? 0 : SCREEN_HEIGHT;
+        e->end = edge_end(e, y);
+      } else if (option == 1) {
+        // only end point is inside the SCREEN
+        float y = e->start->y <= e->end->y ? 0 : SCREEN_HEIGHT;
+        e->end = edge_end(e, y);
+      } else {
+        break;
+      }
+    }
+  }
+}
 
 // ________________________________________________________________________________________________________________
 
@@ -178,10 +269,10 @@ int main() {
     e->type = 0;
     push(&pq, e);
   }
-
+  Event *e = NULL;
   while (!isEmpty(&pq)) {
 
-    Event *e = top(&pq);
+    e = top(&pq);
     pop(&pq);
 
     if (e->type == 0) {
@@ -191,5 +282,21 @@ int main() {
     }
   }
 
+  complete_edges(e->p);
+  //
+  for (int i = 0; i < ei; i++) {
+    Edge *e = edges[i];
+    if (e == NULL || e->end == NULL)
+      continue;
+    printf("end  (%d , %d) \n", e->end ? e->end->x : -1,
+           e->end ? e->end->y : -1);
+    //
+  }
+  //
+  //
+
+  // for (int i = 0; i < vi; i++) {
+  //   printf("(%d,%d)\n", vertecies[i].x, vertecies[i].y);
+  // }
   return 0;
 }
